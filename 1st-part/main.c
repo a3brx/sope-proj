@@ -4,45 +4,34 @@
 #include <dirent.h>
 #include <sys/stat.h>
 
-DIR *openDirectory(char *name) {
+int main(int argc, char *argv[]) {
     DIR *dirp;
-    if ((dirp = opendir(name)) == NULL) {
-        perror(name);
-        exit(2);
-    }
-    return dirp;
-}
-
-void function(DIR *dirp, char *name) {
     struct dirent *direntp;
     struct stat stat_buf;
     char *str;
-    char path[257];
+    char name[200];
+    if (argc != 2) {
+        fprintf(stderr, "Usage: %s dir_name\n", argv[0]);
+        exit(1);
+    }
+    if ((dirp = opendir(argv[1])) == NULL) {
+        perror(argv[1]);
+        exit(2);
+    }
     while ((direntp = readdir(dirp)) != NULL) {
-        sprintf(path, "%s/%s", name, direntp->d_name); // <----- NOTAR
+        sprintf(name, "%s/%s", argv[1], direntp->d_name); // <----- NOTAR
         // alternativa a chdir(); ex: anterior
-        if (lstat(path, &stat_buf) == -1) {
+        if (lstat(name, &stat_buf) == -1) // testar com stat()
+        {
             perror("lstat ERROR");
             exit(3);
         }
-        printf("%10d - ", (int) stat_buf.st_ino);
-        if (S_ISREG(stat_buf.st_mode))
-            str = "regular";
-        else if (S_ISDIR(stat_buf.st_mode)) {
-            str = "directory";
-            DIR *aux = openDirectory(path);
-            function(aux, direntp->d_name);
-        } else str = "other";
+        // printf("%10d - ",(int) stat_buf.st_ino);
+        if (S_ISREG(stat_buf.st_mode)) str = "regular";
+        else if (S_ISDIR(stat_buf.st_mode)) str = "directory";
+        else str = "other";
         printf("%-25s - %s\n", direntp->d_name, str);
     }
-}
-
-int main(int argc, char **argv, char **envp) {
-    DIR *dirp;
-    if (argc < 2)
-        argv[1] = ".";
-    dirp = openDirectory(argv[1]);
-    function(dirp, argv[1]);
     closedir(dirp);
     exit(0);
 }
