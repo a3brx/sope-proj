@@ -1,39 +1,68 @@
 #include <stdio.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <zconf.h>
 
-int main(int argc, char *argv[]) {
+char flags[32] = "-";
+char argument[128] = "";
+
+bool isItem(char *word, char letter) {
+    for (int i = 0; i < strlen(word); ++i)
+        if (word[i] == letter)
+            return true;
+    return false;
+}
+
+bool separateArgs(int argc, char **argv) {
+    char *arg;
+    int flagPosition = 1;
+    for (int i = 1; i < argc; ++i) {
+        arg = argv[i];
+        if (arg[0] == '-') {
+            for (int j = 1; j < strlen(arg); ++j)
+                if (!isItem(flags, arg[j]))
+                    flags[flagPosition++] = arg[j];
+        } else {
+            if (strcmp(argument, "") == 0)
+                strcpy(argument, arg);
+            else
+                return false;
+        }
+    }
+    if (strcmp(argument, "") == 0)
+        strcpy(argument, ".");
+    return true;
+}
+
+int main(int argc, char **argv) {
     DIR *dirp;
     struct dirent *direntp;
     struct stat stat_buf;
-    char *str;
-    char name[200];
+    char path[200];
+    int pid;
 
-    // If there's no argument then process the actual directory
-    if (argc < 2)
-        argv[1] = ".";
+    separateArgs(argc, argv);
 
-    if ((dirp = opendir(argv[1])) == NULL) {
-        perror(argv[1]);
+    if ((dirp = opendir(argument)) == NULL) {
+        perror(argument);
         exit(2);
     }
     while ((direntp = readdir(dirp)) != NULL) {
-        sprintf(name, "%s/%s", argv[1], direntp->d_name); // <----- NOTAR
-        // alternativa a chdir(); ex: anterior
-        if (lstat(name, &stat_buf) == -1) { // testar com stat()
+        if (strcmp(direntp->d_name, ".") == 0 || strcmp(direntp->d_name, "..") == 0)
+            continue;
+        sprintf(path, "%s/%s", argument, direntp->d_name);
+        if (lstat(path, &stat_buf) == -1) {
             perror("lstat ERROR");
             exit(3);
         }
-        // printf("%10d - ",(int) stat_buf.st_ino);
-        if (S_ISREG(stat_buf.st_mode))
-            str = "regular";
-        else if (S_ISDIR(stat_buf.st_mode))
-            str = "directory";
-        else
-            str = "other";
-        printf("%-25s - %s\n", direntp->d_name, str);
+        if (S_ISDIR(stat_buf.st_mode)) {
+            printf("%-25s\n", direntp->d_name);
+            if (fork())
+                execl(argv[0], argv[0], flags, path, NULL);
+        }
     }
     closedir(dirp);
     exit(0);
