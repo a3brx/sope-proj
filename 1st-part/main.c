@@ -41,8 +41,7 @@ int main(int argc, char **argv) {
     DIR *dirp;
     struct dirent *direntp;
     struct stat stat_buf;
-    char path[200];
-    int pid;
+    char path[384];
 
     separateArgs(argc, argv);
 
