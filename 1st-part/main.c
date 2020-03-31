@@ -5,6 +5,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <zconf.h>
+#include <wait.h>
 
 char flags[32] = "-";
 char argument[128] = "";
@@ -58,11 +59,13 @@ int main(int argc, char **argv) {
             exit(3);
         }
         if (S_ISDIR(stat_buf.st_mode)) {
-            printf("%-25s\n", direntp->d_name);
-            if (fork())
+            printf("%-25s\n", path);
+            if (fork() == 0)
                 execl(argv[0], argv[0], flags, path, NULL);
         }
     }
+    int ret;
+    while (waitpid(-1, &ret, WNOHANG) >= 0);
     closedir(dirp);
     exit(0);
 }
