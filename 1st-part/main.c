@@ -2,12 +2,9 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include <dirent.h>
-#include <sys/stat.h>
 #include <zconf.h>
-#include <wait.h>
 
-char flags[32] = "-";
+char flags[32] = "";
 char argument[128] = "";
 
 bool isItem(char *word, char letter) {
@@ -38,48 +35,15 @@ bool separateArgs(int argc, char **argv) {
     return true;
 }
 
-void parentCode() {
-
-}
-
-void childCode(DIR *dirp, char **argv) {
-    struct dirent *direntp;
-    struct stat stat_buf;
-    char path[384];
-    while ((direntp = readdir(dirp)) != NULL) {
-        if (strcmp(direntp->d_name, ".") == 0 || strcmp(direntp->d_name, "..") == 0)
-            continue;
-        sprintf(path, "%s/%s", argument, direntp->d_name);
-        if (lstat(path, &stat_buf) == -1) {
-            perror("lstat ERROR");
-            exit(3);
-        }
-        if (S_ISDIR(stat_buf.st_mode)) {
-            printf("%-25s\n", path);
-            if (fork() == 0)
-                execl(argv[0], argv[0], flags, path, NULL);
-        }
-    }
-}
-
 int main(int argc, char **argv) {
-    DIR *dirp;
-    pid_t pid;
+    int out_backup = dup(STDOUT_FILENO);
+    char line[128];
+    int n = sprintf(line, "%d", out_backup);
+    line[n] = 0;
+    setenv("BACKUP_STDOUT_FILENO", line, 0);
 
-    separateArgs(argc, argv);
-    if ((dirp = opendir(argument)) == NULL) {
-        perror(argument);
-        exit(2);
-    }
+    if (separateArgs(argc, argv))
+        execl("simpledu", "simpledu", flags, argument, NULL);
 
-    if ((pid = fork()) < 0)
-        exit(1);
-    else if (pid > 0)
-        parentCode();
-    else
-        childCode(dirp, argv);
-    int ret;
-    while (waitpid(-1, &ret, WNOHANG) >= 0);
-    closedir(dirp);
     exit(0);
 }
