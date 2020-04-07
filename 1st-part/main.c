@@ -38,18 +38,14 @@ bool separateArgs(int argc, char **argv) {
     return true;
 }
 
-int main(int argc, char **argv) {
-    DIR *dirp;
+void parentCode() {
+
+}
+
+void childCode(DIR *dirp, char **argv) {
     struct dirent *direntp;
     struct stat stat_buf;
     char path[384];
-
-    separateArgs(argc, argv);
-
-    if ((dirp = opendir(argument)) == NULL) {
-        perror(argument);
-        exit(2);
-    }
     while ((direntp = readdir(dirp)) != NULL) {
         if (strcmp(direntp->d_name, ".") == 0 || strcmp(direntp->d_name, "..") == 0)
             continue;
@@ -64,6 +60,24 @@ int main(int argc, char **argv) {
                 execl(argv[0], argv[0], flags, path, NULL);
         }
     }
+}
+
+int main(int argc, char **argv) {
+    DIR *dirp;
+    pid_t pid;
+
+    separateArgs(argc, argv);
+    if ((dirp = opendir(argument)) == NULL) {
+        perror(argument);
+        exit(2);
+    }
+
+    if ((pid = fork()) < 0)
+        exit(1);
+    else if (pid > 0)
+        parentCode();
+    else
+        childCode(dirp, argv);
     int ret;
     while (waitpid(-1, &ret, WNOHANG) >= 0);
     closedir(dirp);
