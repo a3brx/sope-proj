@@ -35,24 +35,25 @@ unsigned simpledu(int fd[2], DIR *dirp, char **argv) {
             exit(3);
         }
         if (S_ISDIR(stat_buf.st_mode)) {
-            dup2(fd[READ], STDIN_FILENO);
-            dup2(fd[WRITE], STDOUT_FILENO);
-            if (fork() == 0)
+            if (fork() == 0) {
+                dup2(fd[READ], STDIN_FILENO);
+                dup2(fd[WRITE], STDOUT_FILENO);
                 execl(argv[0], argv[0], flags, path, NULL);
-            read(STDIN_FILENO, line, MAXLINE);
-            dup2(atoi(getenv("BACKUP_STDOUT_FILENO")), STDOUT_FILENO);
-            printf("%-25s %d\n", path, atoi(line));
+            } else {
+                read(fd[READ], line, MAXLINE);
+                dup2(atoi(getenv("BACKUP_STDOUT_FILENO")), STDOUT_FILENO);
+                printf("%-25s\n", path);
+            }
         }
     }
     int n = sprintf(line, "%d", total_size);
     line[n] = 0;
+    dup2(fd[WRITE], STDOUT_FILENO);
     write(STDOUT_FILENO, line, n);
     return total_size;
 }
 
 int main(int argc, char **argv) {
-    argv[1] = "-";
-    argv[2] = ".";
     DIR *dirp;
 
     // Handle argument
