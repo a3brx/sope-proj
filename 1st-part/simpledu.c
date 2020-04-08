@@ -5,27 +5,11 @@
 #include <sys/stat.h>
 #include <zconf.h>
 #include <wait.h>
+#include "pipe.h"
 
-#define MAXLINE 1000
-#define READ 0
-#define WRITE 1
-
+char program[128] = "";
 char flags[32] = "";
 char argument[128] = "";
-int parent_in, parent_out, in, out, console_out;
-
-void create_pipe() {
-    // Saving parent descriptors
-    console_out = atoi(getenv("BACKUP_STDOUT_FILENO"));
-    parent_in = dup(STDIN_FILENO);
-    parent_out = dup(STDOUT_FILENO);
-    close(parent_in);
-    // Creating a new pipe
-    int fd[2];
-    pipe(fd);
-    in = fd[READ];
-    out = fd[WRITE];
-}
 
 void get_dir_stat(char *path, struct stat *stat_buf) {
     if (lstat(path, stat_buf) == -1) {
@@ -34,11 +18,10 @@ void get_dir_stat(char *path, struct stat *stat_buf) {
     }
 }
 
-unsigned simpledu(DIR *dirp, char **argv) {
+unsigned simpledu(DIR *dirp) {
     struct dirent *direntp;
     struct stat stat_buf;
     char path[384];
-    char line[MAXLINE];
     unsigned total_size = 0;
     while ((direntp = readdir(dirp)) != NULL) {
         if (strcmp(direntp->d_name, ".") == 0 || strcmp(direntp->d_name, "..") == 0)
@@ -48,23 +31,19 @@ unsigned simpledu(DIR *dirp, char **argv) {
         total_size += stat_buf.st_size;
         if (S_ISDIR(stat_buf.st_mode)) {
             if (fork() == 0) {
-                execl(argv[0], argv[0], flags, path, NULL);
+                execl(program, program, flags, path, NULL);
             } else {
-                read(in, line, MAXLINE);
-                total_size += atoi(line);
+                total_size += read_child_size();
             }
         }
     }
-    int n = sprintf(line, "%d", total_size);
-    line[n] = 0;
-    write(parent_out, " ", 1);
-    write(parent_out, line, n);
-    write(parent_out, "\n", 1);
+    write_size();
     return total_size;
 }
 
 int main(int argc, char **argv) {
     // Handle argument
+    strcpy(program, argv[0]);
     strcpy(flags, argv[1]);
     strcpy(argument, argv[2]);
     create_pipe();
@@ -75,17 +54,9 @@ int main(int argc, char **argv) {
         exit(2);
     }
 
-    dup2(in, STDIN_FILENO);
-    dup2(out, STDOUT_FILENO);
+    write_on_console(simpledu(dirp), argument);
 
-    unsigned result = simpledu(dirp, argv);
-
-    char line[MAXLINE];
-    sprintf(line, "%-25d %s\n", result, argument);
-    write(console_out, line, strlen(line));
-
-    close(in);
-    close(out);
+    close_pipe();
     int ret;
     while (waitpid(-1, &ret, WNOHANG) >= 0);
     closedir(dirp);
