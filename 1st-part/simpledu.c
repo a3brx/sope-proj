@@ -14,7 +14,7 @@ char flags[32] = "";
 char argument[128] = "";
 int parent_in, parent_out, in, out, console_out;
 
-void create_pipe(){
+void create_pipe() {
     // Saving parent descriptors
     console_out = atoi(getenv("BACKUP_STDOUT_FILENO"));
     parent_in = dup(STDIN_FILENO);
@@ -27,7 +27,7 @@ void create_pipe(){
     out = fd[WRITE];
 }
 
-void get_dir_stat(char *path, struct stat *stat_buf){
+void get_dir_stat(char *path, struct stat *stat_buf) {
     if (lstat(path, stat_buf) == -1) {
         perror("lstat ERROR");
         exit(3);
@@ -44,17 +44,16 @@ unsigned simpledu(DIR *dirp, char **argv) {
         if (strcmp(direntp->d_name, ".") == 0 || strcmp(direntp->d_name, "..") == 0)
             continue;
         sprintf(path, "%s/%s", argument, direntp->d_name);
-
         get_dir_stat(path, &stat_buf);
-
+        total_size += stat_buf.st_size;
         if (S_ISDIR(stat_buf.st_mode)) {
             if (fork() == 0) {
                 execl(argv[0], argv[0], flags, path, NULL);
             } else {
                 read(in, line, MAXLINE);
+                total_size += atoi(line);
             }
         }
-        total_size += stat_buf.st_size;
     }
     int n = sprintf(line, "%d", total_size);
     line[n] = 0;
