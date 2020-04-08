@@ -12,6 +12,7 @@ char program[128] = "";
 char flags[128] = "";
 char argument[128] = "";
 bool files_flag, bytes_flag, links_flag, symls_flag, sizes_flag;
+int block = 1024;
 
 bool isItem(char *word, char letter) {
     for (int i = 0; i < strlen(word); ++i)
@@ -47,13 +48,15 @@ void print_size(struct stat stat, char *path) {
 }
 
 void print_dir_size(unsigned size, char *path) {
-    if (bytes_flag)
+    if (bytes_flag) {
         write_on_console(size, path);
-    else {
-        struct stat stat_buf;
-        get_dir_stat(argument, &stat_buf);
-        write_on_console(size / stat_buf.st_blksize, path);
+        return;
     }
+    struct stat stat_buf;
+    get_dir_stat(path, &stat_buf);
+    if (size % stat_buf.st_blksize != 0)
+        size += stat_buf.st_blksize;
+    write_on_console(size / stat_buf.st_blksize * 4, path);
 }
 
 unsigned simpledu(DIR *dirp) {
