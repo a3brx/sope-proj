@@ -40,13 +40,20 @@ void get_dir_stat(char *path, struct stat *stat_buf) {
 }
 
 void print_size(struct stat stat, char *path) {
-    //if (bytes_flag)
-    write_on_console(stat.st_size, path);
+    if (bytes_flag)
+        write_on_console(stat.st_size, path);
+    else
+        write_on_console(stat.st_size / stat.st_blksize, path);
 }
 
 void print_dir_size(unsigned size, char *path) {
-    //if (bytes_flag)
-    write_on_console(size, path);
+    if (bytes_flag)
+        write_on_console(size, path);
+    else {
+        struct stat stat_buf;
+        get_dir_stat(argument, &stat_buf);
+        write_on_console(size / stat_buf.st_blksize, path);
+    }
 }
 
 unsigned simpledu(DIR *dirp) {
@@ -68,7 +75,8 @@ unsigned simpledu(DIR *dirp) {
             }
         } else {
             total_size += stat_buf.st_size;
-            print_size(stat_buf, path);
+            if (files_flag)
+                print_size(stat_buf, path);
         }
     }
     write_size(total_size);
