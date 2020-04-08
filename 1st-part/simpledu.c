@@ -30,7 +30,7 @@ void handle_arguments(char **argv) {
     // block_size
     links_flag = isItem(flags, 'l');
     symls_flag = isItem(flags, 'L');
-    sizes_flag = !isItem(flags, 'S');
+    sizes_flag = isItem(flags, 'S');
 }
 
 void get_dir_stat(char *path, struct stat *stat_buf) {
@@ -43,8 +43,7 @@ void get_dir_stat(char *path, struct stat *stat_buf) {
 void print_size(struct stat stat, char *path) {
     if (bytes_flag)
         write_on_console(stat.st_size, path);
-    else
-        write_on_console(stat.st_size / stat.st_blksize, path);
+    write_on_console(stat.st_blocks / (1024 / 512), path);
 }
 
 void print_dir_size(unsigned size, char *path) {
@@ -54,9 +53,13 @@ void print_dir_size(unsigned size, char *path) {
     }
     struct stat stat_buf;
     get_dir_stat(path, &stat_buf);
-    if (size % stat_buf.st_blksize != 0)
-        size += stat_buf.st_blksize;
-    write_on_console(size / stat_buf.st_blksize * 4, path);
+    write_on_console(size / (1024 / 512), path);
+}
+
+unsigned get_size(struct stat stat_buf) {
+    if (bytes_flag)
+        return stat_buf.st_size;
+    return stat_buf.st_blocks;// / (1024 / 512);
 }
 
 unsigned simpledu(DIR *dirp) {
@@ -64,7 +67,7 @@ unsigned simpledu(DIR *dirp) {
     struct stat stat_buf;
     char path[384];
     get_dir_stat(argument, &stat_buf);
-    unsigned total_size = stat_buf.st_size;
+    unsigned total_size = get_size(stat_buf);
     while ((direntp = readdir(dirp)) != NULL) {
         if (strcmp(direntp->d_name, ".") == 0 || strcmp(direntp->d_name, "..") == 0)
             continue;
@@ -73,11 +76,11 @@ unsigned simpledu(DIR *dirp) {
         if (S_ISDIR(stat_buf.st_mode)) {
             if (fork() == 0) {
                 execl(program, program, flags, path, NULL);
-            } else {
+            } else if (!sizes_flag) {
                 total_size += read_child_size();
             }
         } else {
-            total_size += stat_buf.st_size;
+            total_size += get_size(stat_buf);
             if (files_flag)
                 print_size(stat_buf, path);
         }
