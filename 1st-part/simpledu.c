@@ -60,7 +60,6 @@ unsigned simpledu(DIR *dirp) {
             continue;
         sprintf(path, "%s/%s", argument, direntp->d_name);
         get_dir_stat(path, &stat_buf);
-        total_size += stat_buf.st_size;
         if (S_ISDIR(stat_buf.st_mode)) {
             if (fork() == 0) {
                 execl(program, program, flags, path, NULL);
@@ -68,6 +67,7 @@ unsigned simpledu(DIR *dirp) {
                 total_size += read_child_size();
             }
         } else {
+            total_size += stat_buf.st_size;
             print_size(stat_buf, path);
         }
     }
