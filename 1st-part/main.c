@@ -4,6 +4,9 @@
 #include <string.h>
 #include <zconf.h>
 
+#define READ 0
+#define WRITE 1
+
 char flags[32] = "";
 char argument[128] = "";
 
@@ -42,6 +45,11 @@ int main(int argc, char **argv) {
     line[n] = 0;
     setenv("BACKUP_STDOUT_FILENO", line, 0);
 
+    int first_pipe[2];
+    pipe(first_pipe);
+
+    dup2(first_pipe[READ], STDIN_FILENO);
+    dup2(first_pipe[WRITE], STDOUT_FILENO);
     if (separateArgs(argc, argv))
         execl("simpledu", "simpledu", flags, argument, NULL);
 
