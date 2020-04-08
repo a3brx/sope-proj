@@ -19,7 +19,7 @@ bool isItem(char *word, char letter) {
 
 bool separateArgs(int argc, char **argv) {
     char *arg;
-    int flagPosition = 1;
+    int flagPosition = 0;
     for (int i = 1; i < argc; ++i) {
         arg = argv[i];
         if (arg[0] == '-') {
@@ -48,10 +48,11 @@ int main(int argc, char **argv) {
     int first_pipe[2];
     pipe(first_pipe);
 
-    dup2(first_pipe[READ], STDIN_FILENO);
-    dup2(first_pipe[WRITE], STDOUT_FILENO);
-    if (separateArgs(argc, argv))
+    if (separateArgs(argc, argv)) {
+        dup2(first_pipe[READ], STDIN_FILENO);
+        dup2(first_pipe[WRITE], STDOUT_FILENO);
         execl("simpledu", "simpledu", flags, argument, NULL);
+    }
 
     exit(0);
 }

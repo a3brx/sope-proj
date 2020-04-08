@@ -32,17 +32,17 @@ void close_pipe() {
 
 int write_on_console(unsigned size, char *path) {
     char line[MAXLINE];
-    sprintf(line, "%-15d %s\n", size, path);
+    sprintf(line, "%-7d %s\n", size, path);
     return write(console_out, line, strlen(line));
 }
 
 int read_child_size() {
     char line[MAXLINE];
     read(in, line, MAXLINE);
-    return atoi(line);;
+    return atoi(line);
 }
 
-void write_size(int size) {
+void write_size(unsigned size) {
     char line[MAXLINE];
     int n = sprintf(line, "%d\n", size);
     line[n] = 0;
