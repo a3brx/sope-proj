@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <zconf.h>
+#include <signal.h>
 
 #define READ 0
 #define WRITE 1
@@ -47,12 +48,35 @@ bool separateArgs(int argc, char **argv) {
     return true;
 }
 
+void sigint_handler(int sig) {
+    char temp;
+	kill(-1,SIGSTOP);
+	printf("Do you want to terminate the program? (y/n):");
+	temp = getchar();
+
+	if(temp == 'y' || temp == 'Y'){
+        kill(getpid(),SIGTERM);
+		printf("Terminating all processes...");
+	}
+	else if(temp == 'n' || temp == 'N'){
+		kill(-1, SIGCONT);
+		printf("Resuming all processes...");
+    }
+	else{
+		printf("Invalid Character! \n");
+	}
+
+	return;
+
+}
+
 int main(int argc, char **argv) {
     int out_backup = dup(STDOUT_FILENO);
     char line[128];
     int n = sprintf(line, "%d", out_backup);
     line[n] = 0;
     setenv("BACKUP_STDOUT_FILENO", line, 0);
+    signal(SIGINT, sigint_handler);
 
     int first_pipe[2];
     pipe(first_pipe);
