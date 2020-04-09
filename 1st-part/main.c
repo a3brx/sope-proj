@@ -10,6 +10,7 @@
 char flags[32] = "";
 char argument[128] = "";
 char max_depth[10] = "-2";
+char block_size[20] = "1024";
 
 bool isItem(char *word, char letter) {
     for (int i = 0; i < strlen(word); ++i)
@@ -28,6 +29,9 @@ bool separateArgs(int argc, char **argv) {
                 strcpy(max_depth, arg + 12);
             }
         } else if (arg[0] == '-') {
+            if (strcmp(arg, "-B") == 0) {
+                strcpy(block_size, argv[++i]);
+            }
             for (int j = 1; j < strlen(arg); ++j)
                 if (!isItem(flags, arg[j]))
                     flags[flag_position++] = arg[j];
@@ -54,10 +58,10 @@ int main(int argc, char **argv) {
     pipe(first_pipe);
 
     if (separateArgs(argc, argv)) {
-        printf("Testando");
+        printf("%s\n", block_size);
         dup2(first_pipe[READ], STDIN_FILENO);
         dup2(first_pipe[WRITE], STDOUT_FILENO);
-        execl("simpledu", "simpledu", flags, argument, max_depth, NULL);
+        execl("simpledu", "simpledu", flags, argument, max_depth, block_size, NULL);
     }
 
     unsetenv("BACKUP_STDOUT_FILENO");

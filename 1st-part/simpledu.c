@@ -11,9 +11,8 @@
 char program[128] = "";
 char flags[128] = "";
 char argument[128] = "";
-int max_depth;
-bool files_flag, bytes_flag, links_flag, symls_flag, sizes_flag;
-int block = 1024;
+int max_depth, block_size = 1024;
+bool files_flag, bytes_flag, symls_flag, sizes_flag;
 
 bool isItem(char *word, char letter) {
     for (int i = 0; i < strlen(word); ++i)
@@ -27,10 +26,9 @@ void handle_arguments(char **argv) {
     strcpy(flags, argv[1]);
     strcpy(argument, argv[2]);
     max_depth = atoi(argv[3]);
+    block_size = atoi(argv[4]);
     files_flag = isItem(flags, 'a');
     bytes_flag = isItem(flags, 'b');
-    // block_size
-    links_flag = isItem(flags, 'l');
     symls_flag = isItem(flags, 'L');
     sizes_flag = isItem(flags, 'S');
 }
@@ -45,16 +43,16 @@ void get_dir_stat(char *path, struct stat *stat_buf) {
 void print_size(struct stat stat, char *path) {
     if (bytes_flag)
         write_on_console(stat.st_size, path);
-    write_on_console(stat.st_blocks / (1024 / 512), path);
+    write_on_console(stat.st_blocks / (block_size / 512), path);
 }
 
 void print_dir_size(unsigned size, char *path) {
     if (max_depth == -1)
         return;
     if (bytes_flag)
-        write_on_console(size, path);
+        write_on_console(size % block_size ? size / block_size + 1 : size / block_size, path);
     else
-        write_on_console(size / (1024 / 512), path);
+        write_on_console(size / (block_size / 512), path);
 }
 
 unsigned get_size(struct stat stat_buf) {
@@ -67,7 +65,10 @@ void recursive_call(char *path) {
     char new_max_depth[10];
     int n = sprintf(new_max_depth, "%d", max_depth == -1 ? -1 : max_depth - 1);
     new_max_depth[n] = 0;
-    execl(program, program, flags, path, new_max_depth, NULL);
+    char block_string[20];
+    n = sprintf(block_string, "%d", block_size);
+    block_string[n] = 0;
+    execl(program, program, flags, path, new_max_depth, block_string, NULL);
 }
 
 unsigned simpledu(DIR *dirp) {
