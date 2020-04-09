@@ -9,6 +9,7 @@
 
 char flags[32] = "";
 char argument[128] = "";
+char max_depth[10] = "-2";
 
 bool isItem(char *word, char letter) {
     for (int i = 0; i < strlen(word); ++i)
@@ -19,13 +20,17 @@ bool isItem(char *word, char letter) {
 
 bool separateArgs(int argc, char **argv) {
     char *arg;
-    int flagPosition = 0;
+    int flag_position = 0;
     for (int i = 1; i < argc; ++i) {
         arg = argv[i];
-        if (arg[0] == '-') {
+        if (strncmp(arg, "--", 2) == 0) {
+            if (strncmp(arg + 2, "max-depth=", 10) == 0) {
+                strcpy(max_depth, arg + 12);
+            }
+        } else if (arg[0] == '-') {
             for (int j = 1; j < strlen(arg); ++j)
                 if (!isItem(flags, arg[j]))
-                    flags[flagPosition++] = arg[j];
+                    flags[flag_position++] = arg[j];
         } else {
             if (strcmp(argument, "") == 0)
                 strcpy(argument, arg);
@@ -49,10 +54,12 @@ int main(int argc, char **argv) {
     pipe(first_pipe);
 
     if (separateArgs(argc, argv)) {
+        printf("Testando");
         dup2(first_pipe[READ], STDIN_FILENO);
         dup2(first_pipe[WRITE], STDOUT_FILENO);
-        execl("simpledu", "simpledu", flags, argument, NULL);
+        execl("simpledu", "simpledu", flags, argument, max_depth, NULL);
     }
 
+    unsetenv("BACKUP_STDOUT_FILENO");
     exit(0);
 }

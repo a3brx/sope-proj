@@ -11,6 +11,7 @@
 char program[128] = "";
 char flags[128] = "";
 char argument[128] = "";
+int max_depth;
 bool files_flag, bytes_flag, links_flag, symls_flag, sizes_flag;
 int block = 1024;
 
@@ -25,6 +26,7 @@ void handle_arguments(char **argv) {
     strcpy(program, argv[0]);
     strcpy(flags, argv[1]);
     strcpy(argument, argv[2]);
+    max_depth = atoi(argv[3]);
     files_flag = isItem(flags, 'a');
     bytes_flag = isItem(flags, 'b');
     // block_size
@@ -47,19 +49,25 @@ void print_size(struct stat stat, char *path) {
 }
 
 void print_dir_size(unsigned size, char *path) {
-    if (bytes_flag) {
-        write_on_console(size, path);
+    if (max_depth == -1)
         return;
-    }
-    struct stat stat_buf;
-    get_dir_stat(path, &stat_buf);
-    write_on_console(size / (1024 / 512), path);
+    if (bytes_flag)
+        write_on_console(size, path);
+    else
+        write_on_console(size / (1024 / 512), path);
 }
 
 unsigned get_size(struct stat stat_buf) {
     if (bytes_flag)
         return stat_buf.st_size;
     return stat_buf.st_blocks;// / (1024 / 512);
+}
+
+void recursive_call(char *path) {
+    char new_max_depth[10];
+    int n = sprintf(new_max_depth, "%d", max_depth == -1 ? -1 : max_depth - 1);
+    new_max_depth[n] = 0;
+    execl(program, program, flags, path, new_max_depth, NULL);
 }
 
 unsigned simpledu(DIR *dirp) {
@@ -75,7 +83,7 @@ unsigned simpledu(DIR *dirp) {
         get_dir_stat(path, &stat_buf);
         if (S_ISDIR(stat_buf.st_mode)) {
             if (fork() == 0) {
-                execl(program, program, flags, path, NULL);
+                recursive_call(path);
             } else if (!sizes_flag) {
                 total_size += read_child_size();
             }
@@ -92,7 +100,6 @@ unsigned simpledu(DIR *dirp) {
 int main(int argc, char **argv) {
     handle_arguments(argv);
     create_pipe();
-
     DIR *dirp;
     if ((dirp = opendir(argument)) == NULL) {
         perror(argument);
