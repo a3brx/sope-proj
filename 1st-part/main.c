@@ -60,7 +60,7 @@ int main(int argc, char **argv) {
     if (separateArgs(argc, argv)) {
         dup2(first_pipe[READ], STDIN_FILENO);
         dup2(first_pipe[WRITE], STDOUT_FILENO);
-        execl("simpledu", "simpledu", flags, argument, max_depth, block_size, NULL);
+        execl("simpledu_rec", "simpledu_rec", flags, argument, max_depth, block_size, NULL);
     }
 
     unsetenv("BACKUP_STDOUT_FILENO");
