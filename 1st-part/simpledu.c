@@ -42,6 +42,8 @@ void get_dir_stat(char *path, struct stat *stat_buf) {
 }
 
 void print_size(struct stat stat, char *path) {
+    if (max_depth == 0 || max_depth == -1)
+        return;
     if (bytes_flag)
         write_on_console(stat.st_size, path);
     write_on_console((int) (stat.st_blocks / (block_size / 512.0)), path);
