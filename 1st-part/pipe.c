@@ -32,7 +32,7 @@ void close_pipe() {
 
 int write_on_console(unsigned size, char *path) {
     char line[MAXLINE];
-    sprintf(line, "%-7d %s\n", size, path);
+    sprintf(line, "%d\t%s\n", size, path);
     return write(console_out, line, strlen(line));
 }
 
