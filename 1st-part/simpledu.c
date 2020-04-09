@@ -11,7 +11,8 @@
 char program[128] = "";
 char flags[128] = "";
 char argument[128] = "";
-int max_depth, block_size = 1024;
+int max_depth;
+unsigned block_size;
 bool files_flag, bytes_flag, symls_flag, sizes_flag;
 
 bool isItem(char *word, char letter) {
@@ -43,7 +44,7 @@ void get_dir_stat(char *path, struct stat *stat_buf) {
 void print_size(struct stat stat, char *path) {
     if (bytes_flag)
         write_on_console(stat.st_size, path);
-    write_on_console(stat.st_blocks / (block_size / 512), path);
+    write_on_console((int) (stat.st_blocks / (block_size / 512.0)), path);
 }
 
 void print_dir_size(unsigned size, char *path) {
@@ -52,7 +53,7 @@ void print_dir_size(unsigned size, char *path) {
     if (bytes_flag)
         write_on_console(size % block_size ? size / block_size + 1 : size / block_size, path);
     else
-        write_on_console(size / (block_size / 512), path);
+        write_on_console((int) (size / (block_size / 512.0)), path);
 }
 
 unsigned get_size(struct stat stat_buf) {

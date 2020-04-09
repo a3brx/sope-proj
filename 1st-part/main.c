@@ -58,7 +58,6 @@ int main(int argc, char **argv) {
     pipe(first_pipe);
 
     if (separateArgs(argc, argv)) {
-        printf("%s\n", block_size);
         dup2(first_pipe[READ], STDIN_FILENO);
         dup2(first_pipe[WRITE], STDOUT_FILENO);
         execl("simpledu", "simpledu", flags, argument, max_depth, block_size, NULL);
