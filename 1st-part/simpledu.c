@@ -6,6 +6,7 @@
 #include <zconf.h>
 #include <wait.h>
 #include <stdbool.h>
+#include <signal.h>
 #include "pipe.h"
 
 char program[128] = "";
@@ -14,6 +15,26 @@ char argument[128] = "";
 int max_depth;
 unsigned block_size;
 bool files_flag, bytes_flag, symls_flag, sizes_flag;
+
+void sigint_handler(int sig) {
+    char temp;
+    kill(0, SIGSTOP);
+    write_on_console(0, "Do you want to terminate the program? (y/n):");
+    temp = get_character();
+
+    if (temp == 'y' || temp == 'Y') {
+        kill(getpid(), SIGTERM);
+        write_on_console(0, "Terminating all processes...");
+    } else if (temp == 'n' || temp == 'N') {
+        kill(-1, SIGCONT);
+        write_on_console(0, "Resuming all processes...");
+    } else {
+        write_on_console(0, "Invalid Character! \n");
+    }
+
+    return;
+
+}
 
 bool isItem(char *word, char letter) {
     for (int i = 0; i < strlen(word); ++i)
@@ -102,6 +123,7 @@ unsigned simpledu(DIR *dirp) {
 }
 
 int main(int argc, char **argv) {
+    signal(SIGINT, sigint_handler);
     handle_arguments(argv);
     create_pipe();
     DIR *dirp;

@@ -8,11 +8,12 @@
 #define WRITE 1
 #define MAXLINE 1000
 
-int parent_in, parent_out, in, out, console_out;
+int parent_in, parent_out, in, out, console_out, console_in;
 
 void create_pipe() {
     // Saving parent descriptors
     console_out = atoi(getenv("BACKUP_STDOUT_FILENO"));
+    console_in = atoi(getenv("BACKUP_STDIN_FILENO"));
     parent_in = dup(STDIN_FILENO);
     parent_out = dup(STDOUT_FILENO);
     close(parent_in);
@@ -34,6 +35,12 @@ int write_on_console(unsigned size, char *path) {
     char line[MAXLINE];
     sprintf(line, "%d\t%s\n", size, path);
     return write(console_out, line, strlen(line));
+}
+
+char get_character() {
+    char buf;
+    read(console_in, &buf, 1);
+    return buf;
 }
 
 int read_child_size() {
