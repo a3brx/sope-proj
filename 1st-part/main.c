@@ -57,6 +57,9 @@ int main(int argc, char **argv) {
     n = sprintf(line, "%d", in_backup);
     line[n] = 0;
     setenv("BACKUP_STDIN_FILENO", line, 0);
+    n = sprintf(line, "%d", getgid());
+    line[n] = 0;
+    setenv("SIMPLEDU_GROUP_ID", line, 0);
 
     int first_pipe[2];
     pipe(first_pipe);

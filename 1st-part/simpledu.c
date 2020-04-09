@@ -18,7 +18,7 @@ bool files_flag, bytes_flag, symls_flag, sizes_flag;
 
 void sigint_handler(int sig) {
     char temp;
-    kill(0, SIGSTOP);
+    kill(atoi(getenv("SIMPLEDU_GROUP_ID")), SIGSTOP);
     write_on_console(0, "Do you want to terminate the program? (y/n):");
     temp = get_character();
 
@@ -26,7 +26,7 @@ void sigint_handler(int sig) {
         kill(getpid(), SIGTERM);
         write_on_console(0, "Terminating all processes...");
     } else if (temp == 'n' || temp == 'N') {
-        kill(-1, SIGCONT);
+        kill(-atoi(getenv("SIMPLEDU_GROUP_ID")), SIGCONT);
         write_on_console(0, "Resuming all processes...");
     } else {
         write_on_console(0, "Invalid Character! \n");
@@ -123,6 +123,7 @@ unsigned simpledu(DIR *dirp) {
 }
 
 int main(int argc, char **argv) {
+    setgid(atoi(getenv("SIMPLEDU_GROUP_ID")));
     signal(SIGINT, sigint_handler);
     handle_arguments(argv);
     create_pipe();
