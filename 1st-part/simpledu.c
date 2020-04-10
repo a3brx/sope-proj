@@ -9,12 +9,26 @@
 #include <signal.h>
 #include "pipe.h"
 
+#define MAXLINE 1000
+
 char program[128] = "";
 char flags[128] = "";
 char argument[128] = "";
 int max_depth;
 unsigned block_size;
 bool files_flag, bytes_flag, symls_flag, sizes_flag, is_parent;
+
+void exit_program(int exit_code) {
+    char status[3];
+    sprintf(status, "%d", exit_code);
+    write_on_log("EXIT", status);
+    exit(exit_code);
+}
+
+void exit_message(char *message, int exit_code) {
+    perror(message);
+    exit_program(exit_code);
+}
 
 void sigint_handler(int sig) {
     if (is_parent) {
@@ -70,10 +84,8 @@ void get_dir_stat(char *path, struct stat *stat_buf) {
         res = lstat(path, stat_buf);
     else
         res = stat(path, stat_buf);
-    if (res == -1) {
-        perror("lstat ERROR");
-        exit(3);
-    }
+    if (res == -1)
+        exit_message("lstat ERROR", 3);
 }
 
 void print_size(struct stat stat, char *path) {
@@ -106,6 +118,9 @@ void recursive_call(char *path) {
     char block_string[20];
     n = sprintf(block_string, "%d", block_size);
     block_string[n] = 0;
+    char log[MAXLINE];
+    sprintf(log, "%s %s %s", program, flags, path);
+    write_on_log("CREATE", log);
     execl(program, program, flags, path, new_max_depth, block_string, NULL);
 }
 
@@ -142,15 +157,13 @@ int main(int argc, char **argv) {
     handle_arguments(argv);
     create_pipe();
     DIR *dirp;
-    if ((dirp = opendir(argument)) == NULL) {
-        perror(argument);
-        exit(2);
-    }
+    if ((dirp = opendir(argument)) == NULL)
+        exit_message(argument, 2);
 
     print_dir_size(simpledu(dirp), argument);
     close_pipe();
     int ret;
     while (waitpid(-1, &ret, WNOHANG) >= 0);
     closedir(dirp);
-    exit(0);
+    exit_program(0);
 }

@@ -52,7 +52,8 @@ void write_on_log(char *action, char *info) {
     clock_t start = atol(getenv("SIMPLEDU_PARENT_START"));
     long ticks = sysconf(_SC_CLK_TCK);
     FILE *file = fopen(log_file, "a+");
-    fprintf(file, "%05.2f - %d - %s - %s", (float) ((end - start) / ticks), getpid(), action, info);
+    fprintf(file, "%05.2f - %8d - %s - %s\n", (float) ((end - start) / ticks), getpid(), action, info);
+    fflush(file);
 }
 
 int read_child_size() {
@@ -65,7 +66,7 @@ int read_child_size() {
 
 void write_size(unsigned size) {
     char line[MAXLINE];
-    int n = sprintf(line, "%d\n", size);
+    int n = sprintf(line, "%d", size);
     line[n] = 0;
     write(parent_out, line, n);
     write_on_log("SEND_PIPE", line);
