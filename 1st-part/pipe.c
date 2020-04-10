@@ -53,16 +53,14 @@ void write_on_log(char *action, char *info) {
     clock_t end = times(&t);
     clock_t start = atol(getenv("SIMPLEDU_PARENT_START"));
     long ticks = sysconf(_SC_CLK_TCK);
-    char log[MAXLINE + 20];
-    int n = sprintf(log, "%4.2f - %d - %s - %s\n", (double) (end - start) / ticks, getpid(), action, info);
-    FILE *file = fopen(log_file, "a");
-    fprintf(file, "%4.2f - %d - %s - %s\n", (double) (end - start) / ticks, getpid(), action, info);
-    // write(file, log, n);
+    FILE *file = fopen(log_file, "a+");
+    fprintf(file, "%05.2f - %d - %s - %s", (float) ((end - start) / ticks), getpid(), action, info);
 }
 
 int read_child_size() {
-    char line[MAXLINE];
-    read(in, line, MAXLINE);
+    char line[MAXLINE + 1];
+    int n = read(in, line, MAXLINE);
+    line[n] = 0;
     write_on_log("RECV_PIPE", line);
     return atoi(line);
 }
