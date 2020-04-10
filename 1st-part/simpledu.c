@@ -18,9 +18,12 @@ bool files_flag, bytes_flag, symls_flag, sizes_flag;
 
 void sigint_handler(int sig) {
     char temp;
-    kill(atoi(getenv("SIMPLEDU_GROUP_ID")), SIGSTOP);
+    kill(-atoi(getenv("SIMPLEDU_GROUP_ID")), SIGSTOP);
     write_on_console(0, "Do you want to terminate the program? (y/n):");
-    temp = get_character();
+
+    do {
+        temp = get_character();
+    } while (temp != 'y' && temp != 'Y' && temp != 'n' && temp != 'N');
 
     if (temp == 'y' || temp == 'Y') {
         kill(getpid(), SIGTERM);
@@ -28,8 +31,6 @@ void sigint_handler(int sig) {
     } else if (temp == 'n' || temp == 'N') {
         kill(-atoi(getenv("SIMPLEDU_GROUP_ID")), SIGCONT);
         write_on_console(0, "Resuming all processes...");
-    } else {
-        write_on_console(0, "Invalid Character! \n");
     }
 
     return;

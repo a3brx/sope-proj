@@ -22,19 +22,38 @@ bool isItem(char *word, char letter) {
 bool separateArgs(int argc, char **argv) {
     char *arg;
     int flag_position = 0;
+    bool block_size_changed = false;
     for (int i = 1; i < argc; ++i) {
         arg = argv[i];
         if (strncmp(arg, "--", 2) == 0) {
-            if (strncmp(arg + 2, "max-depth=", 10) == 0) {
+            if (strncmp(arg + 2, "max-depth=", 10) == 0)
                 strcpy(max_depth, arg + 12);
-            }
+            else if (strncmp(arg + 2, "block-size=", 11) == 0) {
+                strcpy(block_size, arg + 13);
+                block_size_changed = true;
+            } else if (strcmp(arg + 2, "all") == 0)
+                flags[flag_position++] = 'a';
+            else if (strcmp(arg + 2, "bytes") == 0) {
+                flags[flag_position++] = 'b';
+                if (!block_size_changed)
+                    strcpy(block_size, "1");
+            } else if (strcmp(arg + 2, "count-links") == 0)
+                flags[flag_position++] = 'l';
+            else if (strcmp(arg + 2, "dereference") == 0)
+                flags[flag_position++] = 'L';
+            else if (strcmp(arg + 2, "separate-dirs") == 0)
+                flags[flag_position++] = 'S';
         } else if (arg[0] == '-') {
             if (strcmp(arg, "-B") == 0) {
                 strcpy(block_size, argv[++i]);
+                block_size_changed = true;
             }
             for (int j = 1; j < strlen(arg); ++j)
-                if (!isItem(flags, arg[j]))
+                if (!isItem(flags, arg[j])) {
                     flags[flag_position++] = arg[j];
+                    if (arg[j] == 'b' && !block_size_changed)
+                        strcpy(block_size, "1");
+                }
         } else {
             if (strcmp(argument, "") == 0)
                 strcpy(argument, arg);
