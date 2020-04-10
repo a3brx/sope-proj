@@ -14,27 +14,27 @@ char flags[128] = "";
 char argument[128] = "";
 int max_depth;
 unsigned block_size;
-bool files_flag, bytes_flag, symls_flag, sizes_flag;
+bool files_flag, bytes_flag, symls_flag, sizes_flag, is_parent;
 
 void sigint_handler(int sig) {
-    char temp;
-    kill(-atoi(getenv("SIMPLEDU_GROUP_ID")), SIGSTOP);
-    write_on_console(0, "Do you want to terminate the program? (y/n):");
+    if (is_parent) {
+        char temp;
+        kill(-atoi(getenv("SIMPLEDU_GROUP_ID")), SIGSTOP);
+        write_on_console(0, "Do you want to terminate the program? (y/n):");
 
-    do {
-        temp = get_character();
-    } while (temp != 'y' && temp != 'Y' && temp != 'n' && temp != 'N');
+        do {
+            temp = get_character();
+        } while (temp != 'y' && temp != 'Y' && temp != 'n' && temp != 'N');
 
-    if (temp == 'y' || temp == 'Y') {
-        kill(getpid(), SIGTERM);
-        write_on_console(0, "Terminating all processes...");
-    } else if (temp == 'n' || temp == 'N') {
-        kill(-atoi(getenv("SIMPLEDU_GROUP_ID")), SIGCONT);
-        write_on_console(0, "Resuming all processes...");
+        if (temp == 'y' || temp == 'Y') {
+            kill(getpid(), SIGTERM);
+            write_on_console(0, "Terminating all processes...");
+        } else {
+            kill(-atoi(getenv("SIMPLEDU_GROUP_ID")), SIGCONT);
+            write_on_console(0, "Resuming all processes...");
+        }
+        return;
     }
-
-    return;
-
 }
 
 bool isItem(char *word, char letter) {
@@ -45,6 +45,14 @@ bool isItem(char *word, char letter) {
 }
 
 void handle_arguments(char **argv) {
+    if (getenv("SIMPLEDU_PARENT_ID"))
+        is_parent = false;
+    else {
+        char line[10];
+        sprintf(line, "%d\n", getppid());
+        setenv("SIMPLEDU_PARENT_ID", line, 0);
+        is_parent = true;
+    }
     strcpy(program, argv[0]);
     strcpy(flags, argv[1]);
     strcpy(argument, argv[2]);

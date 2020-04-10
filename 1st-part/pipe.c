@@ -1,4 +1,7 @@
 #include "pipe.h"
+#include <sys/times.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <zconf.h>
@@ -9,11 +12,13 @@
 #define MAXLINE 1000
 
 int parent_in, parent_out, in, out, console_out, console_in;
+char *log_file;
 
 void create_pipe() {
     // Saving parent descriptors
     console_out = atoi(getenv("BACKUP_STDOUT_FILENO"));
     console_in = atoi(getenv("BACKUP_STDIN_FILENO"));
+    log_file = getenv("LOG_FILENAME");
     parent_in = dup(STDIN_FILENO);
     parent_out = dup(STDOUT_FILENO);
     close(parent_in);
@@ -43,9 +48,22 @@ char get_character() {
     return buf;
 }
 
+void write_on_log(char *action, char *info) {
+    struct tms t;
+    clock_t end = times(&t);
+    clock_t start = atol(getenv("SIMPLEDU_PARENT_START"));
+    long ticks = sysconf(_SC_CLK_TCK);
+    char log[MAXLINE + 20];
+    int n = sprintf(log, "%4.2f - %d - %s - %s\n", (double) (end - start) / ticks, getpid(), action, info);
+    FILE *file = fopen(log_file, "a");
+    fprintf(file, "%4.2f - %d - %s - %s\n", (double) (end - start) / ticks, getpid(), action, info);
+    // write(file, log, n);
+}
+
 int read_child_size() {
     char line[MAXLINE];
     read(in, line, MAXLINE);
+    write_on_log("RECV_PIPE", line);
     return atoi(line);
 }
 
@@ -54,4 +72,5 @@ void write_size(unsigned size) {
     int n = sprintf(line, "%d\n", size);
     line[n] = 0;
     write(parent_out, line, n);
+    write_on_log("SEND_PIPE", line);
 }

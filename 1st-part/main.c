@@ -1,3 +1,4 @@
+#include <sys/times.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -51,7 +52,7 @@ bool separateArgs(int argc, char **argv) {
             for (int j = 1; j < strlen(arg); ++j)
                 if (!isItem(flags, arg[j])) {
                     flags[flag_position++] = arg[j];
-                    if (arg[j] == 'b' && !block_size_changed)
+                    if (arg[j] == 'b')
                         strcpy(block_size, "1");
                 }
         } else {
@@ -67,9 +68,14 @@ bool separateArgs(int argc, char **argv) {
 }
 
 int main(int argc, char **argv) {
-    int out_backup = dup(STDOUT_FILENO);
     char line[128];
-    int n = sprintf(line, "%d", out_backup);
+    struct tms t;
+    clock_t time = times(&t);
+    int n = sprintf(line, "%ld", time);
+    line[n] = 0;
+    setenv("SIMPLEDU_PARENT_START", line, 0);
+    int out_backup = dup(STDOUT_FILENO);
+    n = sprintf(line, "%d", out_backup);
     line[n] = 0;
     setenv("BACKUP_STDOUT_FILENO", line, 0);
     int in_backup = dup(STDIN_FILENO);
