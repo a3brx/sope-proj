@@ -1,10 +1,10 @@
 #pragma once
 
-#include <stdbool.h>
-
 void create_pipe();
 
 void close_pipe();
+
+void write_on_log(char *action, char *info);
 
 int write_on_console(unsigned size, char *path);
 

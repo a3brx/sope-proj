@@ -65,7 +65,12 @@ void handle_arguments(char **argv) {
 }
 
 void get_dir_stat(char *path, struct stat *stat_buf) {
-    if (lstat(path, stat_buf) == -1) {
+    int res;
+    if (!symls_flag)
+        res = lstat(path, stat_buf);
+    else
+        res = stat(path, stat_buf);
+    if (res == -1) {
         perror("lstat ERROR");
         exit(3);
     }
