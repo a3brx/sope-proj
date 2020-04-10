@@ -50,7 +50,7 @@ void write_on_log(char *action, char *info) {
     clock_t start = atol(getenv("SIMPLEDU_PARENT_START"));
     long ticks = sysconf(_SC_CLK_TCK);
     FILE *file = fopen(log_file, "a+");
-    fprintf(file, "%05.2f - %8d - %s - %s\n", (float) ((end - start) / ticks), getpid(), action, info);
+    fprintf(file, "%8.2f - %8d - %s - %s\n", ((float) (end - start)) * 1000 / ticks, getpid(), action, info);
     fflush(file);
 }
 
