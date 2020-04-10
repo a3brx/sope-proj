@@ -9,8 +9,6 @@
 #include <signal.h>
 #include "pipe.h"
 
-#define MAXLINE 1000
-
 char program[128] = "";
 char flags[128] = "";
 char argument[128] = "";
@@ -119,7 +117,7 @@ void recursive_call(char *path) {
     n = sprintf(block_string, "%d", block_size);
     block_string[n] = 0;
     char log[MAXLINE];
-    sprintf(log, "%s %s %s", program, flags, path);
+    sprintf(log, "%s %s %s %s %s", program, flags, path, new_max_depth, block_string);
     write_on_log("CREATE", log);
     execl(program, program, flags, path, new_max_depth, block_string, NULL);
 }

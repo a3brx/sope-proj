@@ -1,4 +1,5 @@
 #pragma once
+#define MAXLINE 1000
 
 void create_pipe();
 

@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <zconf.h>
+#include "pipe.h"
 
 #define READ 0
 #define WRITE 1
@@ -92,6 +93,9 @@ int main(int argc, char **argv) {
     if (separateArgs(argc, argv)) {
         dup2(first_pipe[READ], STDIN_FILENO);
         dup2(first_pipe[WRITE], STDOUT_FILENO);
+        char log[MAXLINE];
+        sprintf(log, "simpledu_rec %s %s %s %s", flags, argument, max_depth, block_size);
+        write_on_log("CREATE", log);
         execl("simpledu_rec", "simpledu_rec", flags, argument, max_depth, block_size, NULL);
     }
 

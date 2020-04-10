@@ -7,16 +7,13 @@
 
 #define READ 0
 #define WRITE 1
-#define MAXLINE 1000
 
 int parent_in, parent_out, in, out, console_out, console_in;
-char *log_file;
 
 void create_pipe() {
     // Saving parent descriptors
     console_out = atoi(getenv("BACKUP_STDOUT_FILENO"));
     console_in = atoi(getenv("BACKUP_STDIN_FILENO"));
-    log_file = getenv("LOG_FILENAME");
     parent_in = dup(STDIN_FILENO);
     parent_out = dup(STDOUT_FILENO);
     close(parent_in);
@@ -47,6 +44,7 @@ char get_character() {
 }
 
 void write_on_log(char *action, char *info) {
+    char *log_file = getenv("LOG_FILENAME");
     struct tms t;
     clock_t end = times(&t);
     clock_t start = atol(getenv("SIMPLEDU_PARENT_START"));
