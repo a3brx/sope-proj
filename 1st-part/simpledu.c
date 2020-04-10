@@ -87,9 +87,9 @@ void get_dir_stat(char *path, struct stat *stat_buf) {
 }
 
 void print_size(struct stat stat, char *path) {
-    int byte_number;
     if (max_depth == 0 || max_depth == -1)
         return;
+    int byte_number;
     if (bytes_flag)
         byte_number = stat.st_size;
     else
@@ -104,10 +104,15 @@ void print_size(struct stat stat, char *path) {
 void print_dir_size(unsigned size, char *path) {
     if (max_depth == -1)
         return;
+    int byte_number;
     if (bytes_flag)
-        write_on_console(size % block_size ? size / block_size + 1 : size / block_size, path);
+        byte_number = (int) (size % block_size ? size / block_size + 1 : size / block_size);
     else
-        write_on_console((int) (size / (block_size / 512.0)), path);
+        byte_number = (int) (size / (block_size / 512.0));
+    write_on_console(byte_number, path);
+    char status[MAXLINE];
+    sprintf(status, "%d %s", byte_number, path);
+    write_on_log("ENTRY", status);
 }
 
 unsigned get_size(struct stat stat_buf) {
