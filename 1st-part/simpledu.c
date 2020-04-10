@@ -167,7 +167,7 @@ int main(int argc, char **argv) {
     create_pipe();
     DIR *dirp;
     if ((dirp = opendir(argument)) == NULL)
-        exit_message(argument, 2);
+        exit_message(argument, 1);
 
     print_dir_size(simpledu(dirp), argument);
     close_pipe();
