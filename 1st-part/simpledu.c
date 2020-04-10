@@ -87,11 +87,18 @@ void get_dir_stat(char *path, struct stat *stat_buf) {
 }
 
 void print_size(struct stat stat, char *path) {
+    int byte_number;
     if (max_depth == 0 || max_depth == -1)
         return;
     if (bytes_flag)
-        write_on_console(stat.st_size, path);
-    write_on_console((int) (stat.st_blocks / (block_size / 512.0)), path);
+        byte_number = stat.st_size;
+    else
+        byte_number = (int) (stat.st_blocks / (block_size / 512.0));
+    if (files_flag)
+        write_on_console(byte_number, path);
+    char status[MAXLINE];
+    sprintf(status, "%d %s", byte_number, path);
+    write_on_log("ENTRY", status);
 }
 
 void print_dir_size(unsigned size, char *path) {
@@ -141,8 +148,7 @@ unsigned simpledu(DIR *dirp) {
             }
         } else {
             total_size += get_size(stat_buf);
-            if (files_flag)
-                print_size(stat_buf, path);
+            print_size(stat_buf, path);
         }
     }
     write_size(total_size);
