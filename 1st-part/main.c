@@ -68,24 +68,29 @@ bool separateArgs(int argc, char **argv) {
     return true;
 }
 
-int main(int argc, char **argv) {
+void set_environment() {
     char line[128];
     struct tms t;
     clock_t time = times(&t);
     int n = sprintf(line, "%ld", time);
     line[n] = 0;
-    setenv("SIMPLEDU_PARENT_START", line, 0);
+    setenv("SIMPLEDU_PARENT_START", line, 1);
     int out_backup = dup(STDOUT_FILENO);
     n = sprintf(line, "%d", out_backup);
     line[n] = 0;
-    setenv("BACKUP_STDOUT_FILENO", line, 0);
+    setenv("BACKUP_STDOUT_FILENO", line, 1);
     int in_backup = dup(STDIN_FILENO);
     n = sprintf(line, "%d", in_backup);
     line[n] = 0;
-    setenv("BACKUP_STDIN_FILENO", line, 0);
+    setenv("BACKUP_STDIN_FILENO", line, 1);
     n = sprintf(line, "%d", getgid());
     line[n] = 0;
-    setenv("SIMPLEDU_GROUP_ID", line, 0);
+    setenv("SIMPLEDU_GROUP_ID", line, 1);
+    setenv("LOG_FILENAME","../simpledu.log", 0);
+}
+
+int main(int argc, char **argv) {
+    set_environment();
 
     int first_pipe[2];
     pipe(first_pipe);
